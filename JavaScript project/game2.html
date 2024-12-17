@@ -1,0 +1,179 @@
+<html>
+
+<head>
+    <style>
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 200px); 
+            gap: 20px; 
+            justify-content: center;
+            margin: 20px auto;
+        }
+
+        .card {
+            width: 200px;
+            height: 250px;
+            background: linear-gradient(135deg, rgba(238,174,202,1) 0%, rgba(148,187,233,1) 100%); 
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: scale(1.05); 
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2); 
+        }
+
+        .flipped {
+            background-color: rgba(211, 211, 211, 0.8); 
+            color: white; 
+            font-size: 20px; 
+        }
+
+        .matched {
+            background-color: limegreen;
+            box-shadow: 0 6px 15px rgba(0, 255, 0, 0.3); 
+            transform: scale(1.1);
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: rgba(148,187,233,1);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: rgba(238,174,202,1);
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #go-back-button {
+            background-color: rgba(238,174,202,1);
+            margin-top: 20px;
+        }
+
+        #go-back-button:hover {
+            background-color: rgba(148,187,233,1);
+        }
+    </style>
+</head>
+
+<body>
+    <button onclick="restartGame()">Restart Game</button>
+    <button id="go-back-button" onclick="goBack()">Go back to creating cards</button>
+    <br /><br />
+    <div id="game-board"></div>
+
+    <script>
+        let storedCards = JSON.parse(localStorage.getItem("myCards")) || []; 
+        let cards = [];
+        let gameBoard = document.getElementById("game-board");
+        let flippedCards = [];
+        let matchedPairsCount = 0;
+
+        if (storedCards.length > 0) {
+            storedCards.forEach((card, index) => {
+                cards.push({ text: card.word, type: "word", key: index });
+                cards.push({ text: card.translation, type: "translation", key: index });
+            });
+        } else {
+            alert("No cards found in localStorage. Please add cards.");
+        }
+
+        function shuffleCards(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                let randomIndex = Math.floor(Math.random() * (i + 1));
+                [array[i], array[randomIndex]] = [array[randomIndex], array[i]];
+            }
+        }
+
+        function renderUI() {
+            gameBoard.innerHTML = "";
+            for (let i = 0; i < cards.length; i++) {
+                let myCardDiv = document.createElement("div");
+                myCardDiv.classList.add("card");
+                myCardDiv.textContent = "?";
+                myCardDiv.dataset.text = cards[i].text;
+                myCardDiv.dataset.type = cards[i].type;
+                myCardDiv.dataset.key = cards[i].key;
+                myCardDiv.addEventListener("click", flipCard);
+                gameBoard.appendChild(myCardDiv);
+            }
+        }
+
+        function flipCard() {
+            if (flippedCards.length === 2 || this.classList.contains("flipped")) {
+                return;
+            }
+
+            this.classList.add("flipped");
+            this.textContent = this.dataset.text;
+            flippedCards.push(this);
+
+            if (flippedCards.length === 2) {
+                setTimeout(checkMatch, 1000); 
+            }
+        }
+
+        function checkMatch() {
+            let card1 = flippedCards[0];
+            let card2 = flippedCards[1];
+
+            if (card1.dataset.key === card2.dataset.key && card1.dataset.type !== card2.dataset.type) {
+                card1.classList.add("matched");
+                card2.classList.add("matched");
+
+                matchedPairsCount++;
+
+                if (matchedPairsCount === storedCards.length) {
+                    alert("You have found all matches!");
+                }
+            } else {
+                card1.classList.remove("flipped");
+                card2.classList.remove("flipped");
+                card1.textContent = "?";
+                card2.textContent = "?";
+            }
+
+            flippedCards = [];
+        }
+
+        function restartGame() {
+            if (confirm("Are you sure to restart the game?")) {
+                shuffleCards(cards);
+                renderUI();
+                matchedPairsCount = 0;
+            }
+        }
+
+        function goBack() {
+            window.location.href = "index.html"; 
+        }
+
+        shuffleCards(cards);
+        renderUI();
+    </script>
+</body>
+
+</html>
+
+
